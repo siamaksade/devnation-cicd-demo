@@ -22,8 +22,8 @@ pipeline {
               def build = openshift.startBuild("mapit-spring", "--from-file=mapit-spring.jar")
 
               timeout(10) {
-                build.untilEach(1) { // We want a minimum of 1 build
-                    return it.object().status.phase == "Complete"
+                build.untilEach(1) {
+                  return it.object().status.phase in ["Complete", "Failed", "Cancelled"]
                 }
               }
             }
