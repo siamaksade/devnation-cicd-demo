@@ -9,7 +9,7 @@ pipeline {
         script {
           openshift.withCluster() {
             openshift.withProject('dev') {
-              def tags = openshift.selector("istag").objects().collect { it.metadata.name }.findAll { it.startsWith 'mapit-spring:' }.collect { it.replaceAll(/catalog:(.*)/, "\$1") }.sort()
+              def tags = openshift.selector("istag").objects().collect { it.metadata.name }.findAll { it.startsWith 'mapit-spring:' }.collect { it.replaceAll(/mapit-spring:(.*)/, "\$1") }.sort()
   
               timeout(10) {
                 releaseImage = input(
@@ -39,7 +39,7 @@ pipeline {
               def dc = openshift.newApp("${releaseImage}", "--name=${canarySvc}").narrow('dc')
               dc.rollout().status()
 
-              openshift.set("route-backends", "catalog", "${activeSvc}=90%", "${canarySvc}=10%")
+              openshift.set("route-backends", "mapit-spring", "${activeSvc}=90%", "${canarySvc}=10%")
             }
           }
         }
