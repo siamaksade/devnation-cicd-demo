@@ -39,7 +39,7 @@ pipeline {
               def dc = openshift.newApp("mapit-spring:${releaseTag}", "--name=${canarySvc}").narrow('dc')
               openshift.set("probe dc/${canarySvc} --readiness --get-url=http://:8080/ --initial-delay-seconds=30 --failure-threshold=10 --period-seconds=10")
               openshift.set("probe dc/${canarySvc} --liveness  --get-url=http://:8080/ --initial-delay-seconds=180 --failure-threshold=10 --period-seconds=10")
-              
+
               dc.rollout().status()
 
               openshift.set("route-backends", "mapit-spring", "${activeSvc}=90%", "${canarySvc}=10%")
@@ -68,7 +68,7 @@ pipeline {
             input message: "Send 100% of live traffic to the new release?", ok: "Approve"
         }
         script {
-          openshift.withCluster(prodCluster, prodToken) {
+          openshift.withCluster() {
             openshift.withProject('prod') {
               openshift.set("route-backends", "mapit-spring", "${canarySvc}=100%")
               openshift.selector(["dc/${activeSvc}", "svc/${activeSvc}"]).delete()
