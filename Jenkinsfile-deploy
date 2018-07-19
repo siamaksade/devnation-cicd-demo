@@ -19,7 +19,7 @@ pipeline {
         script {
           openshift.withCluster() {
             openshift.withProject('dev') {
-              def build = openshift.startBuild("mapit-spring", "--from-file=mapit-spring.jar")
+              def build = openshift.startBuild("mapit-spring", "--from-file=target/mapit-spring.jar")
 
               timeout(10) {
                 build.untilEach(1) {
