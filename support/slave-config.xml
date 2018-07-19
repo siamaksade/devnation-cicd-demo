@@ -1,13 +1,17 @@
 <org.csanchez.jenkins.plugins.kubernetes.PodTemplate>
   <inheritFrom></inheritFrom>
   <name>maven</name>
+  <namespace></namespace>
   <privileged>false</privileged>
   <alwaysPullImage>false</alwaysPullImage>
   <instanceCap>2147483647</instanceCap>
+  <slaveConnectTimeout>100</slaveConnectTimeout>
   <idleMinutes>0</idleMinutes>
+  <activeDeadlineSeconds>0</activeDeadlineSeconds>
   <label>maven</label>
   <serviceAccount>jenkins</serviceAccount>
   <nodeSelector></nodeSelector>
+  <nodeUsageMode>NORMAL</nodeUsageMode>
   <customWorkspaceVolumeEnabled>false</customWorkspaceVolumeEnabled>
   <workspaceVolume class="org.csanchez.jenkins.plugins.kubernetes.volumes.workspace.EmptyDirWorkspaceVolume">
     <memory>false</memory>
@@ -22,18 +26,27 @@
   <containers>
     <org.csanchez.jenkins.plugins.kubernetes.ContainerTemplate>
       <name>jnlp</name>
-      <image>registry.access.redhat.com/openshift3/jenkins-slave-maven-rhel7</image>
+      <image>registry.access.redhat.com/openshift3/jenkins-slave-maven-rhel7:v3.9</image>
       <privileged>false</privileged>
-      <alwaysPullImage>false</alwaysPullImage>
+      <alwaysPullImage>true</alwaysPullImage>
       <workingDir>/tmp</workingDir>
       <command></command>
       <args>${computer.jnlpmac} ${computer.name}</args>
       <ttyEnabled>false</ttyEnabled>
-      <resourceRequestCpu>200m</resourceRequestCpu>
-      <resourceRequestMemory>512Mi</resourceRequestMemory>
+      <resourceRequestCpu></resourceRequestCpu>
+      <resourceRequestMemory></resourceRequestMemory>
       <resourceLimitCpu>2</resourceLimitCpu>
       <resourceLimitMemory>2Gi</resourceLimitMemory>
       <envVars/>
+      <ports/>
+      <livenessProbe>
+        <execArgs></execArgs>
+        <timeoutSeconds>0</timeoutSeconds>
+        <initialDelaySeconds>0</initialDelaySeconds>
+        <failureThreshold>0</failureThreshold>
+        <periodSeconds>0</periodSeconds>
+        <successThreshold>0</successThreshold>
+      </livenessProbe>
     </org.csanchez.jenkins.plugins.kubernetes.ContainerTemplate>
   </containers>
   <envVars/>
