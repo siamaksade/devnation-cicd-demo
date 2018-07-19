@@ -1,0 +1,79 @@
+def releaseTag, activeSvc, canarySvc
+
+pipeline {
+  agent any
+
+  stages {
+    stage('Select Version') {
+      steps {
+        script {
+          openshift.withCluster() {
+            openshift.withProject('dev') {
+              def tags = openshift.selector("istag").objects().collect { it.metadata.name }.findAll { it.startsWith 'mapit-spring:' }.collect { it.replaceAll(/catalog:(.*)/, "\$1") }.sort()
+  
+              timeout(10) {
+                releaseTag = input(
+                  ok: "Deploy",
+                  message: "Enter release version to promote to PROD",
+                  parameters: [
+                    choice(choices: tags.join('\n'), description: '', name: 'Release Version')
+                  ]
+                )
+              }
+            }
+          }
+        }
+      }
+    }
+    stage('Deploy Canary 10%') {
+      steps {
+        script {
+          openshift.withCluster() {
+            openshift.withProject('prod') {
+              openshift.tag("dev/mapit-spring:${releaseTag}", "prod/mapit-spring:${releaseTag}")
+
+              activeSvc = openshift.selector("route", "mapit-spring").object().spec.to.name
+              def suffix = (activeSvc ==~ /mapit-spring-(\d+)/) ? (activeSvc.replaceAll(/mapit-spring-(\d+)/, '$1') as int) + 1 : "1"
+              canarySvc = "mapit-spring-${suffix}"
+
+              def dc = openshift.newApp("mapit-spring:${releaseTag}", "--name=${canarySvc}").narrow('dc')
+              dc.rollout().status()
+
+              openshift.set("route-backends", "catalog", "${activeSvc}=90%", "${canarySvc}=10%")
+            }
+          }
+        }
+      }
+    }
+    stage('Grow Canary 50%') {
+      steps {
+        timeout(time:15, unit:'MINUTES') {
+            input message: "Send 50% of live traffic to new release?", ok: "Approve"
+        }
+        script {
+          openshift.withCluster() {
+            openshift.withProject('prod') {
+              openshift.set("route-backends", "mapit-spring", "${activeSvc}=50%", "${canarySvc}=50%")
+            }
+          }
+        }
+      }
+    }
+    stage('Rollout 100%') {
+      steps {
+        timeout(time:15, unit:'MINUTES') {
+            input message: "Send 100% of live traffic to the new release?", ok: "Approve"
+        }
+        script {
+          openshift.withCluster(prodCluster, prodToken) {
+            openshift.withProject('prod') {
+              openshift.set("route-backends", "mapit-spring", "${canarySvc}=100%")
+              openshift.selector(["dc/${activeSvc}", "svc/${activeSvc}"]).delete()
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
