@@ -1,4 +1,4 @@
-def releaseTag, activeSvc, canarySvc
+def releaseImage, activeSvc, canarySvc
 
 pipeline {
   agent any
@@ -12,7 +12,7 @@ pipeline {
               def tags = openshift.selector("istag").objects().collect { it.metadata.name }.findAll { it.startsWith 'mapit-spring:' }.collect { it.replaceAll(/catalog:(.*)/, "\$1") }.sort()
   
               timeout(10) {
-                releaseTag = input(
+                releaseImage = input(
                   ok: "Deploy",
                   message: "Enter release version to promote to PROD",
                   parameters: [
@@ -30,13 +30,13 @@ pipeline {
         script {
           openshift.withCluster() {
             openshift.withProject('prod') {
-              openshift.tag("dev/mapit-spring:${releaseTag}", "prod/mapit-spring:${releaseTag}")
+              openshift.tag("dev/${releaseImage}", "prod/${releaseImage}")
 
               activeSvc = openshift.selector("route", "mapit-spring").object().spec.to.name
               def suffix = (activeSvc ==~ /mapit-spring-(\d+)/) ? (activeSvc.replaceAll(/mapit-spring-(\d+)/, '$1') as int) + 1 : "1"
               canarySvc = "mapit-spring-${suffix}"
 
-              def dc = openshift.newApp("mapit-spring:${releaseTag}", "--name=${canarySvc}").narrow('dc')
+              def dc = openshift.newApp("${releaseImage}", "--name=${canarySvc}").narrow('dc')
               dc.rollout().status()
 
               openshift.set("route-backends", "catalog", "${activeSvc}=90%", "${canarySvc}=10%")
