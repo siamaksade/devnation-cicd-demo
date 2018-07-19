@@ -18,12 +18,13 @@ pipeline {
       steps {
         script {
           openshift.withCluster() {
-            def pom = readMavenPom file: 'pom.xml'
-            def build = openshift.startBuild("mapit-spring", "--from-file=mapit-spring-${pom.version}.jar")
+            openshift.withProject('dev') {
+              def build = openshift.startBuild("mapit-spring", "--from-file=mapit-spring.jar")
 
-            timeout(10) {
-              build.untilEach(1) { // We want a minimum of 1 build
-                  return it.object().status.phase == "Complete"
+              timeout(10) {
+                build.untilEach(1) { // We want a minimum of 1 build
+                    return it.object().status.phase == "Complete"
+                }
               }
             }
           }
@@ -34,7 +35,9 @@ pipeline {
       steps {
         script {
           openshift.withCluster() {
-            openshift.selector("dc/mapit-spring").rollout().latest()
+            openshift.withProject('dev') {
+              openshift.selector("dc/mapit-spring").rollout().latest()
+            }
           }
         }
       }
