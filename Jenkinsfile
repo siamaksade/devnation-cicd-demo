@@ -6,7 +6,7 @@ pipeline {
     stage('Build') {
       steps {
         sh "cp .settings.xml ~/.m2/settings.xml"
-        git url: 'https://github.com/spring-projects/spring-petclinic.git'
+        git url: 'https://github.com/siamaksade/mapit-spring.git'
         sh "mvn package -DskipTests"
       }
     }

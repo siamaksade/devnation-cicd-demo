@@ -6,27 +6,39 @@ pipeline {
     stage('Build') {
       steps {
         sh "cp .settings.xml ~/.m2/settings.xml"
-        git url: 'https://github.com/spring-projects/spring-petclinic.git'
+        git url: 'https://github.com/siamaksade/mapit-spring.git'
         sh "mvn package -DskipTests"
       }
     }
     stage('Test') {
       steps {
-        // sh "mvn test"
+        sh "mvn test"
+      }
+    }
+    stage('Build Image') {
+      steps {
+        script {
+          openshift.withCluster() {
+            def pom = readMavenPom file: 'pom.xml'
+            def build = openshift.startBuild("mapit-spring", "--from-file=mapit-spring-${pom.version}.jar")
+
+            timeout(10) {
+              build.untilEach(1) { // We want a minimum of 1 build
+                  return it.object().status.phase == "Complete"
+              }
+            }
+          }
+        }
       }
     }
     stage('Deploy') {
       steps {
         script {
           openshift.withCluster() {
-            openshift.withProject() {
-              def pom = readMavenPom file: 'pom.xml'
-              openshift.startBuild("spring-petclinic", "--from-file=spring-petclinic-${pom.version}.jar")
-            }
+            openshift.selector("dc/mapit-spring").rollout().latest()
           }
         }
       }
     }
   }
 }
-
