@@ -15,5 +15,5 @@ spec:
     type: Git
   strategy:
     jenkinsPipelineStrategy:
-      jenkinsfilePath: Jenkinsfile-prod
+      jenkinsfilePath: Jenkinsfile-prod-rollback
     type: JenkinsPipeline
