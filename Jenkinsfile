@@ -15,7 +15,7 @@ pipeline {
           openshift.withCluster() {
             openshift.withProject() {
               def pom = readMavenPom file: 'pom.xml'
-              openshift.startBuild("spring-petclinic", "--binary=true", "--from-file=spring-petclinic-${pom.version}.jar")
+              openshift.startBuild("spring-petclinic", "--from-file=spring-petclinic-${pom.version}.jar")
             }
           }
         }
